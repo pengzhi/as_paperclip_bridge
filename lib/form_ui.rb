@@ -9,11 +9,18 @@ module ActiveScaffold
             content = @record.send("#{column.name}_file_name")            
           end
                       
+          action_label, delete_attachment_field = unless @record.class.attachment_definitions[:doc][:has_attachment_presence_validation]
+            [:remove_file,
+            "p.next().insert('" + hidden_field("record[#{column.name}]".to_sym, "delete_#{column.name}", :value => "false") + "'); "]
+          else
+            [:replace_file, nil]
+          end
+
             content_tag(
               :div, 
               link_to(content, @record.send(column.name).url, :popup => true) + " " + 
               " | " +
-              link_to_function(as_(:remove_file), "$(this).previous().value='true'; p=$(this).up(); p.hide(); p.next().insert('" + hidden_field("record[#{column.name}]".to_sym, "delete_#{column.name}", :value => "false") + "'); p.next().insert('" + file_field(:record, column.name, options) + "'); p.next().show()")
+              link_to_function(as_(action_label), "$(this).previous().value='true'; p=$(this).up(); p.hide(); #{delete_attachment_field} p.next().insert('" + file_field(:record, column.name, options) + "'); p.next().show()")
             ) +
             content_tag(
               :div,
